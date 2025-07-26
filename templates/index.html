@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OSINT Search</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+    input[type="text"] { width: 80%; padding: 8px; }
+    button { padding: 8px 16px; }
+    #results { margin-top: 20px; }
+    .link { margin-bottom: 10px; }
+    #loading { display: none; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>OSINT Search</h1>
+  <p>Enter an e-mail, phone number, or username to search:</p>
+  <input type="text" id="query" placeholder="Example: example@mail.com" />
+  <button id="search-btn">Search</button>
+  <div id="loading">Searching...</div>
+  <div id="results"></div>
+
+  <script>
+    document.getElementById('search-btn').addEventListener('click', function() {
+      const query = document.getElementById('query').value.trim();
+      if (!query) return;
+
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('loading').style.display = 'block';
+
+      fetch('/search', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ query })
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('loading').style.display = 'none';
+
+        if (data.error) {
+          document.getElementById('results').innerHTML = `<p>Error: ${data.error}</p>`;
+          return;
+        }
+
+        if (data.results.length === 0) {
+          document.getElementById('results').innerHTML = '<p>No results found.</p>';
+          return;
+        }
+
+        data.results.forEach(url => {
+          const div = document.createElement('div');
+          div.className = 'link';
+          const a = document.createElement('a');
+          a.href = url;
+          a.target = '_blank';
+          a.textContent = url;
+          div.appendChild(a);
+          document.getElementById('results').appendChild(div);
+        });
+      })
+      .catch(err => {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('results').innerHTML = `<p>Error: ${err}</p>`;
+      });
+    });
+  </script>
+</body>
+</html>
